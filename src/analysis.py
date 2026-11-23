@@ -4,8 +4,6 @@ import matplotlib.pyplot as plt
 import networkx as nx
 import numpy as np
 import pandas as pd
-import textwrap
-
 from matplotlib.colors import LinearSegmentedColormap, LogNorm
 from matplotlib.patches import Patch
 
@@ -244,17 +242,6 @@ def plot_group_matrix(ax, m, groups, focus, small=False):
             f"Exam pairs that share a student, by group. {inside:.0%} are on the diagonal", small)
 
 
-def key_findings(stats, m, groups, focus):
-    f = group_summary(stats).loc[focus]
-    in_top10 = (stats.head(10)["group"] == focus).sum()
-    return [
-        f"Group {focus} has {f.course_share:.0%} of the courses but {f.enrolled_share:.0%} of all exam enrollments.",
-        f"{in_top10} of the 10 hardest-to-schedule courses are in group {focus}.",
-        f"{within_group_share(m, groups):.0%} of student overlap stays inside a group, "
-        "so clashes are mostly local to a group.",
-    ]
-
-
 def save_plots(stats, m, groups, focus, out_dir):
     """Save each chart as its own PNG."""
     charts = [
@@ -273,90 +260,34 @@ def save_plots(stats, m, groups, focus, out_dir):
         plt.close(fig)
 
 
-def _tile(ax):
-    ax.set_facecolor(TILE)
-    ax.grid(False)
-    ax.set_xticks([])
-    ax.set_yticks([])
-    for spine in ax.spines.values():
-        spine.set_visible(False)
+def clash_density(m):
+    """Share of course pairs that share at least one student."""
+    n = len(m) - 1
+    return (np.triu(m, k=1) > 0).sum() / (n * (n - 1) // 2)
 
 
-def save_dashboard(stats, m, groups, focus, kpis, path):
-    """One-page summary: KPIs, key findings, six charts."""
-    fig = plt.figure(figsize=(16, 21))
-    # header and charts get their own grids so their spacing can differ
-    outer = fig.add_gridspec(2, 1, height_ratios=[0.36, 2.6], hspace=0.14)
-    header = outer[0].subgridspec(2, 1, height_ratios=[1, 1.5], hspace=0.2)
-    grid = outer[1].subgridspec(3, 2, height_ratios=[1, 0.8, 0.8], hspace=0.42, wspace=0.32)
-
-    tiles = header[0].subgridspec(1, len(kpis), wspace=0.06)
-    for i, (label, value) in enumerate(kpis.items()):
-        ax = fig.add_subplot(tiles[i])
-        _tile(ax)
-        ax.text(0.07, 0.55, value, transform=ax.transAxes, fontsize=22, fontweight="bold", color=INK)
-        ax.text(0.07, 0.2, label, transform=ax.transAxes, color=MUTED)
-        if i == 0:
-            _note(ax, "Exam conflict analysis", 48, fontsize=22, fontweight="bold", color=INK)
-            _note(ax, "Personal project on a public benchmark dataset (car-s-91, Toronto exam timetabling "
-                      "benchmark). Course ids are anonymised.", 26, fontsize=11, color=MUTED)
-
-    ax = fig.add_subplot(header[1])
-    _tile(ax)
-    ax.text(0.015, 0.78, "Key findings", transform=ax.transAxes, fontsize=13, fontweight="bold", color=INK)
-    for i, text in enumerate(key_findings(stats, m, groups, focus)):
-        x = 0.015 + i * 0.33
-        ax.text(x, 0.55, str(i + 1), transform=ax.transAxes, fontsize=20, fontweight="bold", color=ACCENT, va="top")
-        ax.text(x + 0.025, 0.53, textwrap.fill(text, 48), transform=ax.transAxes, fontsize=11,
-                color=INK, va="top", linespacing=1.4)
-
-    plot_group_matrix(fig.add_subplot(grid[0, 0]), m, groups, focus, small=True)
-    plot_groups(fig.add_subplot(grid[0, 1]), stats, focus, small=True)
-    plot_bottleneck(fig.add_subplot(grid[1, 0]), stats, focus, small=True)
-    plot_scatter(fig.add_subplot(grid[1, 1]), stats, focus, small=True)
-    plot_enrolled(fig.add_subplot(grid[2, 0]), stats, focus, small=True)
-    last = fig.add_subplot(grid[2, 1])
-    plot_conflicts(last, stats, focus, small=True)
-    _note(last, SOURCE, -50, fontsize=9, color=MUTED, va="top")
-
-    fig.savefig(path, dpi=150, bbox_inches="tight", facecolor="white")
-    plt.close(fig)
+def summarize(courses, students):
+    """Conflict matrix, per-course stats, course groups and the focus group."""
+    m = conflict_matrix(students, len(courses))
+    groups = course_groups(m)
+    stats = label_groups(course_stats(courses, m), groups)
+    focus = stats.head(10)["group"].mode()[0]  # the group most of the hardest courses belong to
+    return m, stats, groups, focus
 
 
 if __name__ == "__main__":
     courses = load_courses(DATA_DIR / "car-s-91.crs")
     students = load_students(DATA_DIR / "car-s-91.stu")
-    n = len(courses)
+    m, stats, groups, focus = summarize(courses, students)
 
-    m = conflict_matrix(students, n)
-    conflicting_pairs = (np.triu(m, k=1) > 0).sum()
-    total_pairs = n * (n - 1) // 2
-    density = conflicting_pairs / total_pairs
-    print(f"Conflicting course pairs: {conflicting_pairs} / {total_pairs} (density {density:.3f})")
-
+    print(f"Course pairs that clash: {clash_density(m):.3f}")
     print("\nTop 10 pairs by shared students:")
     print(top_pairs(m).to_string(index=False))
-
-    groups = course_groups(m)
-    stats = label_groups(course_stats(courses, m), groups)
     print("\nTop 10 courses by number of conflicts:")
     print(stats.head(10).to_string(index=False))
-
-    # the group most of the hardest courses belong to
-    focus = stats.head(10)["group"].mode()[0]
     print(f"\nCourse groups (Louvain): {[len(g) for g in groups]}, focus group: {focus}")
     print(f"Student overlap inside groups: {within_group_share(m, groups):.1%}")
     print(group_summary(stats).round(3).to_string())
 
-    enrollments = courses["enrolled"].sum()
-    kpis = {
-        "Courses": f"{n:,}",
-        "Students": f"{len(students):,}",
-        "Exam enrollments": f"{enrollments:,}",
-        "Exams per student (avg)": f"{enrollments / len(students):.1f}",
-        "Course pairs that clash": f"{density:.1%}",
-    }
-
     save_plots(stats, m, groups, focus, OUT_DIR)
-    save_dashboard(stats, m, groups, focus, kpis, OUT_DIR / "dashboard.png")
     print(f"\nCharts saved to {OUT_DIR}")

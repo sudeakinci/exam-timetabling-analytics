@@ -5,7 +5,7 @@ import networkx as nx
 import numpy as np
 import pandas as pd
 
-from analysis import conflict_matrix
+from analysis import ACCENT, INK, MUTED, NEUTRAL, OUT_DIR, SOURCE, _note, conflict_matrix, plt
 from load_data import DATA_DIR, load_courses, load_students
 
 SLOTS_PER_DAY = 3  # assumption: morning, midday, afternoon. the benchmark has no days
@@ -110,11 +110,8 @@ def order_within_days(slots, students):
     return {course: move[p] for course, p in slots.items()}
 
 
-if __name__ == "__main__":
-    courses = load_courses(DATA_DIR / "car-s-91.crs")
-    students = load_students(DATA_DIR / "car-s-91.stu")
-    graph = conflict_graph(conflict_matrix(students, len(courses)))
-
+def build_timetables(graph, students):
+    """All timetables to compare, from the plain greedy one to the fully tuned DSatur one."""
     timetables = {name: schedule(graph, strategy) for name, strategy in STRATEGIES.items()}
 
     # same DSatur slots, first moved between days, then reordered inside each day
@@ -122,13 +119,66 @@ if __name__ == "__main__":
     n_days = max(dsatur.values()) // SLOTS_PER_DAY + 1
     timetables["DSatur + day reordering"] = assign_days(dsatur, students, n_days)
     timetables["DSatur + day + period order"] = order_within_days(timetables["DSatur + day reordering"], students)
+    return timetables
 
+
+def compare(timetables, students):
+    """Metrics for every timetable, checked for clashes."""
     results = {name: evaluate(slots, students) for name, slots in timetables.items()}
     for name, r in results.items():
         assert r["clashes"] == 0, f"{name} produced a clash"
     # reordering inside a day must not change who has two exams that day
     assert (results["DSatur + day + period order"]["students 2+ exams/day"]
             == results["DSatur + day reordering"]["students 2+ exams/day"])
+    return results
+
+
+PANELS = [
+    ("days", "Exam days", "{:.0f}"),
+    ("% students 2+ exams/day", "Students with 2+ exams in a day", "{:.1f}%"),
+    ("students back-to-back", "Students with back-to-back exams", "{:,}"),
+]
+
+
+def plot_comparison(axes, results, small=False):
+    """Three bar panels side by side, one per metric. The last timetable is highlighted."""
+    names = list(results)[::-1]  # barh draws bottom-up, so the first method ends up on top
+    colors = [ACCENT if n == names[0] else NEUTRAL for n in names]
+    for ax, (col, label, fmt) in zip(axes, PANELS):
+        values = [results[n][col] for n in names]
+        bars = ax.barh(names, values, height=0.6, color=colors)
+        ax.bar_label(bars, labels=[fmt.format(v) for v in values], padding=4, color=INK)
+        ax.set_title(label, loc="left", fontsize=10, color=INK, pad=8)
+        ax.margins(x=0.2)
+        ax.xaxis.set_visible(False)
+        ax.grid(False)
+        for spine in ax.spines.values():
+            spine.set_visible(False)
+    for ax in axes[1:]:
+        ax.tick_params(labelleft=False)
+
+    plain, tuned = results["DSatur"], results[names[0]]
+    cut = 1 - tuned["students 2+ exams/day"] / plain["students 2+ exams/day"]
+    _note(axes[0], f"Same {tuned['days']} days, {cut:.0%} fewer students with two exams in a day",
+          56 if small else 62, fontsize=11 if small else 13, fontweight="bold", color=INK)
+    _note(axes[0], "Five ways to build the timetable. None has a clash; DSatur is then tuned by moving "
+                   "slots between days and reordering them inside each day",
+          40 if small else 44, fontsize=9 if small else 10, color=MUTED)
+
+
+def save_comparison(results, path):
+    fig, axes = plt.subplots(1, 3, figsize=(14, 3.6), sharey=True)
+    plot_comparison(axes, results)
+    _note(axes[0], SOURCE + f". Assumes {SLOTS_PER_DAY} exam slots per day", -20, fontsize=8, color=MUTED, va="top")
+    fig.savefig(path, dpi=150, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+
+
+if __name__ == "__main__":
+    courses = load_courses(DATA_DIR / "car-s-91.crs")
+    students = load_students(DATA_DIR / "car-s-91.stu")
+    graph = conflict_graph(conflict_matrix(students, len(courses)))
+    results = compare(build_timetables(graph, students), students)
 
     print(f"{len(students):,} students, {len(courses)} courses, {SLOTS_PER_DAY} slots per day\n")
     print(pd.DataFrame.from_dict(results, orient="index").to_string())
@@ -137,3 +187,6 @@ if __name__ == "__main__":
     after = results["DSatur + day reordering"]["students 2+ exams/day"]
     print(f"\nDay reordering: {before:,} -> {after:,} students with 2+ exams in a day "
           f"({(before - after) / before:.1%} fewer)")
+
+    save_comparison(results, OUT_DIR / "schedule_comparison.png")
+    print(f"Chart saved to {OUT_DIR / 'schedule_comparison.png'}")
