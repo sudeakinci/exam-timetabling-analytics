@@ -71,6 +71,24 @@ Each slot's courses are seated largest first, each in the smallest free room tha
 
 With 70 rooms and 4,700 seats, all 56,877 exam seats are placed. Booked rooms are 70.2% full on average; the busiest slot uses 62 of the 70 rooms and 84% of all seats; 111 courses are split over two or more rooms (course 299 uses six). The full plan is in `outputs/timetable.csv`.
 
+### 6. Excel report
+
+`outputs/exam_report.xlsx` is built by `src/excel_report.py` and opens without Python:
+
+| Sheet | What it holds |
+|---|---|
+| Dashboard | KPI tiles, before/after chart, method comparison, seat-use heatmap (day × period), room use by type |
+| KPI | every headline number in one table |
+| Pivot | exam seats by day and period (a real Excel pivot table) |
+| Timetable | one row per course and room, with a fill bar per room |
+| Courses | one row per course: day, period, rooms |
+| Students | per student: exams, exam days, most exams in a day, back-to-back (2+ and "Yes" highlighted) |
+| Enrolments | student–course pairs, for lookups |
+
+Charts are native Excel charts, so they stay editable. The script checks itself before saving: the per-student sheet must give the same 3,302 and 1,363 as the timetable metrics, and the seats must add up to the 56,877 enrolments.
+
+The pivot shows something the summary numbers hide: midday holds only 8,887 of 56,877 exam seats, and two middays are empty. Reordering inside each day puts the lightest slot in the middle, because midday touches both other periods, and the two spare slots of the 11-day calendar end up there too.
+
 ## Decisions and alternatives
 
 **Why `car-s-91`?** The Toronto benchmark has 13 instances. `yor-f-83` (941 students) and `ute-s-92` (2,750) are small; `car-s-91` (16,925 students, 682 courses) is closer to a mid-sized university.
@@ -106,7 +124,6 @@ With 70 rooms and 4,700 seats, all 56,877 exam seats are placed. Booked rooms ar
 
 ## Planned
 
-- **Excel report:** timetable, per-student summary and KPI sheets with conditional formatting, plus a pivot table.
 - **Growth scenario:** if enrolments grow 15%, do the current rooms still fit, and how many extra slots or days are needed?
 - Optional: OR-Tools CP-SAT model with room capacity and same-day constraints; a small Streamlit front end.
 
@@ -125,6 +142,7 @@ python src/scheduler.py    # build and compare timetables, lower bound
 python src/rooms.py        # seat exams in rooms, write outputs/timetable.csv
 python src/sensitivity.py  # 2, 3 or 4 slots per day
 python src/dashboard.py    # one-page dashboard
+python src/excel_report.py # outputs/exam_report.xlsx
 
 pytest                     # data, clash, lower bound and room checks
 ```
@@ -144,9 +162,10 @@ src/
   rooms.py        room assignment
   sensitivity.py  slots-per-day scenarios
   dashboard.py    one-page summary image
+  excel_report.py Excel report with dashboard, pivot and lookup sheets
   run_all.py      run every step
 tests/            pytest checks
-outputs/          charts, dashboard, timetable.csv, slots_per_day.csv
+outputs/          charts, dashboard, timetable.csv, slots_per_day.csv, exam_report.xlsx
 ```
 
 ## References
