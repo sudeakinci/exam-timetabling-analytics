@@ -4,13 +4,14 @@ from analysis import OUT_DIR, conflict_matrix
 from load_data import DATA_DIR, load_dataset
 from scheduler import SLOTS_PER_DAY, build_timetables, conflict_graph
 
-# synthetic: the benchmark has no rooms. capacity = exam seats (spaced out), not lecture seats
+# synthetic: the benchmark has no rooms. capacity = exam seats, about half the lecture seats
+# (every other seat left empty). the biggest exams go to sports halls, as is common in Canada
 ROOM_TYPES = [
     # type, prefix, count, capacity
-    ("Auditorium", "AUD", 2, 400),
+    ("Sports hall", "SH", 2, 400),
     ("Lecture hall", "LH", 8, 150),
-    ("Classroom", "C", 30, 60),
-    ("Seminar room", "S", 30, 30),
+    ("Large classroom", "LC", 30, 60),
+    ("Classroom", "C", 30, 30),
 ]
 PERIODS = ["Morning", "Midday", "Afternoon"]
 

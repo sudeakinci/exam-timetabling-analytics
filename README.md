@@ -98,7 +98,7 @@ With 70 rooms and 4,700 seats, all 56,877 exam seats are placed. Booked rooms ar
   | 4 | 8 | 44.8% | 31.3% | 2,011 |
 
   Fewer slots a day means a longer exam period but fewer students with two exams in a day; this is a policy choice, not a technical one.
-- **Rooms are synthetic:** 2 auditoriums (400 seats), 8 lecture halls (150), 30 classrooms (60), 30 seminar rooms (30). Capacities are exam seats. They are a reasonable mix, not taken from a real campus.
+- **Rooms are synthetic:** 2 sports halls (400 seats), 8 lecture halls (150), 30 large classrooms (60), 30 classrooms (30). Capacities are exam seats, about half of normal lecture seats since every other seat is left empty. Large exams in sports halls are common practice at Canadian universities. The mix is a reasonable guess, not taken from a real campus.
 - **Course ids are anonymised**, so findings are about structure, not named courses.
 - Same-day and back-to-back counts are per student (a student counts once however many such days they have).
 - Not modelled: invigilators, room distance for split courses, exams that must be on a given day.

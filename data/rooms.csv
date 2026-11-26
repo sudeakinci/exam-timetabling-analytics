@@ -1,6 +1,6 @@
 room,type,capacity
-AUD-01,Auditorium,400
-AUD-02,Auditorium,400
+SH-01,Sports hall,400
+SH-02,Sports hall,400
 LH-01,Lecture hall,150
 LH-02,Lecture hall,150
 LH-03,Lecture hall,150
@@ -9,63 +9,63 @@ LH-05,Lecture hall,150
 LH-06,Lecture hall,150
 LH-07,Lecture hall,150
 LH-08,Lecture hall,150
-C-01,Classroom,60
-C-02,Classroom,60
-C-03,Classroom,60
-C-04,Classroom,60
-C-05,Classroom,60
-C-06,Classroom,60
-C-07,Classroom,60
-C-08,Classroom,60
-C-09,Classroom,60
-C-10,Classroom,60
-C-11,Classroom,60
-C-12,Classroom,60
-C-13,Classroom,60
-C-14,Classroom,60
-C-15,Classroom,60
-C-16,Classroom,60
-C-17,Classroom,60
-C-18,Classroom,60
-C-19,Classroom,60
-C-20,Classroom,60
-C-21,Classroom,60
-C-22,Classroom,60
-C-23,Classroom,60
-C-24,Classroom,60
-C-25,Classroom,60
-C-26,Classroom,60
-C-27,Classroom,60
-C-28,Classroom,60
-C-29,Classroom,60
-C-30,Classroom,60
-S-01,Seminar room,30
-S-02,Seminar room,30
-S-03,Seminar room,30
-S-04,Seminar room,30
-S-05,Seminar room,30
-S-06,Seminar room,30
-S-07,Seminar room,30
-S-08,Seminar room,30
-S-09,Seminar room,30
-S-10,Seminar room,30
-S-11,Seminar room,30
-S-12,Seminar room,30
-S-13,Seminar room,30
-S-14,Seminar room,30
-S-15,Seminar room,30
-S-16,Seminar room,30
-S-17,Seminar room,30
-S-18,Seminar room,30
-S-19,Seminar room,30
-S-20,Seminar room,30
-S-21,Seminar room,30
-S-22,Seminar room,30
-S-23,Seminar room,30
-S-24,Seminar room,30
-S-25,Seminar room,30
-S-26,Seminar room,30
-S-27,Seminar room,30
-S-28,Seminar room,30
-S-29,Seminar room,30
-S-30,Seminar room,30
+LC-01,Large classroom,60
+LC-02,Large classroom,60
+LC-03,Large classroom,60
+LC-04,Large classroom,60
+LC-05,Large classroom,60
+LC-06,Large classroom,60
+LC-07,Large classroom,60
+LC-08,Large classroom,60
+LC-09,Large classroom,60
+LC-10,Large classroom,60
+LC-11,Large classroom,60
+LC-12,Large classroom,60
+LC-13,Large classroom,60
+LC-14,Large classroom,60
+LC-15,Large classroom,60
+LC-16,Large classroom,60
+LC-17,Large classroom,60
+LC-18,Large classroom,60
+LC-19,Large classroom,60
+LC-20,Large classroom,60
+LC-21,Large classroom,60
+LC-22,Large classroom,60
+LC-23,Large classroom,60
+LC-24,Large classroom,60
+LC-25,Large classroom,60
+LC-26,Large classroom,60
+LC-27,Large classroom,60
+LC-28,Large classroom,60
+LC-29,Large classroom,60
+LC-30,Large classroom,60
+C-01,Classroom,30
+C-02,Classroom,30
+C-03,Classroom,30
+C-04,Classroom,30
+C-05,Classroom,30
+C-06,Classroom,30
+C-07,Classroom,30
+C-08,Classroom,30
+C-09,Classroom,30
+C-10,Classroom,30
+C-11,Classroom,30
+C-12,Classroom,30
+C-13,Classroom,30
+C-14,Classroom,30
+C-15,Classroom,30
+C-16,Classroom,30
+C-17,Classroom,30
+C-18,Classroom,30
+C-19,Classroom,30
+C-20,Classroom,30
+C-21,Classroom,30
+C-22,Classroom,30
+C-23,Classroom,30
+C-24,Classroom,30
+C-25,Classroom,30
+C-26,Classroom,30
+C-27,Classroom,30
+C-28,Classroom,30
+C-29,Classroom,30
+C-30,Classroom,30
