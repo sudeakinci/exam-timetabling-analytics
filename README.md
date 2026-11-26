@@ -89,6 +89,25 @@ Charts are native Excel charts, so they stay editable. The script checks itself 
 
 The pivot shows something the summary numbers hide: midday holds only 8,887 of 56,877 exam seats, and two middays are empty. Reordering inside each day puts the lightest slot in the middle, because midday touches both other periods, and the two spare slots of the 11-day calendar end up there too.
 
+### 7. Growth scenario: 15% more enrolments
+
+Every course grows by 15% (rounded up), from 56,877 to 65,732 exam seats. Which courses students take together stays the same, so the timetable stays clash-free (`src/projection.py`).
+
+![Growth: seats vs rooms](outputs/growth_rooms.png)
+
+| Scenario | Rooms | Days | Unseated | Busiest slot | 2+ exams/day | Back-to-back |
+|---|---|---|---|---|---|---|
+| Today | 70 | 11 | 0 | 84.0% | 19.5% | 1,363 |
+| +15%, no change | 70 | 11 | **237** | 92.1% | 19.5% | 1,363 |
+| +15%, 12 extra classrooms | 82 | 11 | 0 | 90.0% | 19.5% | 1,363 |
+| +15%, move 12 small exams | 70 | 11 | 0 | 92.1% | 19.5% | 1,372 |
+
+- **Rooms run out before seats do.** The worst slot (day 5, afternoon) needs 4,555 seats out of 4,700, but a room holds one exam at a time, so its many small exams fill all 70 rooms and 227 students are left without a seat. Day 9 morning is short by 10.
+- **Option 1, more rooms:** 12 extra 30-seat classrooms seat everyone.
+- **Option 2, move exams:** the 12 smallest exams in those two slots (5 to 35 students each) move to a slot on the same day where none of their students has another exam. Day 5 midday was empty, so 10 of them go there. No extra rooms or days; the cost is 9 more students with back-to-back exams, and nobody gets a new exam day.
+
+Student shares assume the new students take courses like the current ones.
+
 ## Decisions and alternatives
 
 **Why `car-s-91`?** The Toronto benchmark has 13 instances. `yor-f-83` (941 students) and `ute-s-92` (2,750) are small; `car-s-91` (16,925 students, 682 courses) is closer to a mid-sized university.
@@ -124,7 +143,6 @@ The pivot shows something the summary numbers hide: midday holds only 8,887 of 5
 
 ## Planned
 
-- **Growth scenario:** if enrolments grow 15%, do the current rooms still fit, and how many extra slots or days are needed?
 - Optional: OR-Tools CP-SAT model with room capacity and same-day constraints; a small Streamlit front end.
 
 ## Run it
@@ -141,6 +159,7 @@ python src/analysis.py     # conflict analysis and charts
 python src/scheduler.py    # build and compare timetables, lower bound
 python src/rooms.py        # seat exams in rooms, write outputs/timetable.csv
 python src/sensitivity.py  # 2, 3 or 4 slots per day
+python src/projection.py   # 15% enrolment growth
 python src/dashboard.py    # one-page dashboard
 python src/excel_report.py # outputs/exam_report.xlsx
 
@@ -161,11 +180,12 @@ src/
   scheduler.py    greedy / DSatur, day and period reordering, metrics
   rooms.py        room assignment
   sensitivity.py  slots-per-day scenarios
+  projection.py   15% growth: unseated students, extra rooms or moved exams
   dashboard.py    one-page summary image
   excel_report.py Excel report with dashboard, pivot and lookup sheets
   run_all.py      run every step
 tests/            pytest checks
-outputs/          charts, dashboard, timetable.csv, slots_per_day.csv, exam_report.xlsx
+outputs/          charts, dashboard, timetable.csv, slots_per_day.csv, growth_scenarios.csv, growth_rooms.png, exam_report.xlsx
 ```
 
 ## References

@@ -1,0 +1,5 @@
+scenario,exam seats needed,rooms,days,unseated students,"busiest slot, % of seats",% students 2+ exams/day,students back-to-back,clashes
+Today,56877,70,11,0,84.0,19.5,1363,0
+"+15%, no change",65732,70,11,237,92.1,19.5,1363,0
+"+15%, 12 extra classrooms",65732,82,11,0,90.0,19.5,1363,0
+"+15%, move 12 small exams",65732,70,11,0,92.1,19.5,1372,0

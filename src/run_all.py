@@ -1,7 +1,7 @@
 import runpy
 from pathlib import Path
 
-SCRIPTS = ["load_data", "analysis", "scheduler", "rooms", "sensitivity", "dashboard", "excel_report"]
+SCRIPTS = ["load_data", "analysis", "scheduler", "rooms", "sensitivity", "projection", "dashboard", "excel_report"]
 
 for name in SCRIPTS:
     print(f"\n=== {name}.py ===")
