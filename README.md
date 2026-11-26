@@ -4,6 +4,16 @@ A personal project that builds a clash-free university exam timetable and report
 
 > **Data note.** This project uses `car-s-91` from the Toronto exam timetabling benchmark: real but anonymised student enrolments from Carleton University. It was not built for, or with data from, any current institution. Room data is synthetic (see [Assumptions](#assumptions-and-limitations)).
 
+## In short
+
+A university has to fit every student's exams into as few days as possible, with no student in two exams at once, and preferably not two in one day. This project builds that timetable for 682 courses and 16,925 students, seats it in rooms, and reports on it.
+
+- **No clashes in 11 exam days** (31 slots), using DSatur graph colouring.
+- **40% fewer students with two exams in a day** and **65% fewer with back-to-back exams**, by reordering the same slots.
+- **Every student seated** in 70 rooms; the busiest slot uses 84% of all seats.
+- **At 15% more students, rooms run out before seats do**: 237 students are left without a room. Two fixes are costed: 12 extra classrooms, or moving 12 small exams.
+- **Excel report** with a dashboard, pivot table and per-student sheet: [download `exam_report.xlsx`](outputs/exam_report.xlsx) (GitHub can't preview it; it opens in Excel or Excel for the web).
+
 ![Dashboard](outputs/dashboard.png)
 
 ## Results at a glance
@@ -17,14 +27,21 @@ A personal project that builds a clash-free university exam timetable and report
 | Students with 2+ exams in one day | 5,519 → **3,302 (−40%)** after moving slots between days |
 | Students with back-to-back exams | 3,925 → **1,363 (−65%)** after reordering slots inside each day |
 | Rooms | 70 rooms, 4,700 seats; every student seated; busiest slot uses 84% of all seats |
+| Enrolments +15% | 237 students without a room; fixed by 12 extra classrooms or by moving 12 small exams |
 
 ## What was done
 
-### 1. Data
+Click a step to open it.
+
+<details>
+<summary><b>1. Data</b>: the loader reproduces the published dataset statistics exactly</summary>
 
 Loaded the `.crs` (course, enrolment) and `.stu` (one line per student, listing their courses) files. As a check, the loader reproduces the statistics published with the dataset exactly: 682 exams, 16,925 students, 56,877 enrolments, density 0.13. Enrolment counted from the student file matches the course file for all 682 courses.
 
-### 2. Conflict analysis
+</details>
+
+<details>
+<summary><b>2. Conflict analysis</b>: one group of courses holds 37% of enrolments and most of the hard-to-schedule courses</summary>
 
 Two courses *clash* if at least one student takes both, so their exams can't be at the same time.
 
@@ -38,7 +55,10 @@ Two courses *clash* if at least one student takes both, so their exams can't be 
 | ![Group matrix](outputs/group_matrix.png) | ![Course groups](outputs/course_groups.png) |
 | ![Bottleneck courses](outputs/bottleneck_courses.png) | ![Enrolled vs conflicts](outputs/enrolled_vs_conflicts.png) |
 
-### 3. Scheduling (graph colouring)
+</details>
+
+<details>
+<summary><b>3. Scheduling</b>: DSatur needs 31 slots (11 days); no timetable can use fewer than 23</summary>
 
 Each course is a node; two courses are joined if they share a student. Giving every node a colour so that no two joined nodes share one is the same as giving every exam a time slot so that no student has two exams at once. Fewer colours means a shorter exam period.
 
@@ -54,7 +74,10 @@ Finding the minimum is NP-hard, so three greedy orderings were compared:
 
 DSatur gave the shortest timetable, below the 35 slots commonly used for this instance. It is not proven optimal: the conflict graph contains 23 courses that all clash with each other (a maximum clique), so no timetable can use fewer than 23 slots. The best answer lies somewhere between 23 and 31. But shorter timetables pack exams into fewer days: students with 2+ exams in a day went *up* from 26.7% to 32.6%.
 
-### 4. Making the timetable kinder to students
+</details>
+
+<details>
+<summary><b>4. Making the timetable kinder to students</b>: same slots, 40% fewer students with two exams a day</summary>
 
 The slot a course gets only fixes which exams run together. Which day each slot lands on is free, and moving a whole slot never creates a clash.
 
@@ -65,13 +88,19 @@ The slot a course gets only fixes which exams run together. Which day each slot 
 
 Every timetable is checked against the raw student lists (not the graph) for clashes, and the run stops if any are found.
 
-### 5. Rooms
+</details>
+
+<details>
+<summary><b>5. Rooms</b>: everyone seated in 70 rooms; the busiest slot uses 84% of seats</summary>
 
 Each slot's courses are seated largest first, each in the smallest free room that holds it. A course too big for any free room takes the biggest one and the rest of its students go to the next room. One course per room per slot.
 
 With 70 rooms and 4,700 seats, all 56,877 exam seats are placed. Booked rooms are 70.2% full on average; the busiest slot uses 62 of the 70 rooms and 84% of all seats; 111 courses are split over two or more rooms (course 299 uses six). The full plan is in `outputs/timetable.csv`.
 
-### 6. Excel report
+</details>
+
+<details>
+<summary><b>6. Excel report</b>: dashboard, pivot table and per-student sheets, built from Python</summary>
 
 `outputs/exam_report.xlsx` is built by `src/excel_report.py` and opens without Python:
 
@@ -89,7 +118,10 @@ Charts are native Excel charts, so they stay editable. The script checks itself 
 
 The pivot shows something the summary numbers hide: midday holds only 8,887 of 56,877 exam seats, and two middays are empty. Reordering inside each day puts the lightest slot in the middle, because midday touches both other periods, and the two spare slots of the 11-day calendar end up there too.
 
-### 7. Growth scenario: 15% more enrolments
+</details>
+
+<details>
+<summary><b>7. Growth scenario</b>: at +15%, rooms run out before seats do</summary>
 
 Every course grows by 15% (rounded up), from 56,877 to 65,732 exam seats. Which courses students take together stays the same, so the timetable stays clash-free (`src/projection.py`).
 
@@ -108,7 +140,12 @@ Every course grows by 15% (rounded up), from 56,877 to 65,732 exam seats. Which 
 
 Student shares assume the new students take courses like the current ones.
 
+</details>
+
 ## Decisions and alternatives
+
+<details>
+<summary>Why this dataset, these methods and these charts</summary>
 
 **Why `car-s-91`?** The Toronto benchmark has 13 instances. `yor-f-83` (941 students) and `ute-s-92` (2,750) are small; `car-s-91` (16,925 students, 682 courses) is closer to a mid-sized university.
 
@@ -123,6 +160,8 @@ Student shares assume the new students take courses like the current ones.
 **Why one accent colour?** Group 2 is the story in most charts, so it alone gets a colour and everything else is grey. The colour scale in the group matrix uses the same accent, so colours mean the same thing everywhere.
 
 **Why best-fit rooms?** Putting each course in the smallest room that fits keeps large rooms free for large courses. Filling the biggest rooms first would leave big courses without space.
+
+</details>
 
 ## Assumptions and limitations
 
@@ -141,9 +180,10 @@ Student shares assume the new students take courses like the current ones.
 - Not modelled: invigilators, room distance for split courses, exams that must be on a given day.
 - Results are deterministic for the pinned library versions in `requirements.txt`.
 
-## Planned
+## Not done yet
 
-- Optional: OR-Tools CP-SAT model with room capacity and same-day constraints; a small Streamlit front end.
+- A constraint-programming model (OR-Tools CP-SAT) that handles slots, rooms and same-day exams together, to see how far below 31 slots it can get.
+- A small web front end (Streamlit) to try scenarios without running scripts.
 
 ## Run it
 
