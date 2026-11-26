@@ -7,10 +7,10 @@ import pandas as pd
 from matplotlib.colors import LinearSegmentedColormap, LogNorm
 from matplotlib.patches import Patch
 
-from load_data import DATA_DIR, load_courses, load_students
+from load_data import DATA_DIR, DATASET, load_dataset
 
 OUT_DIR = DATA_DIR.parent.parent / "outputs"
-SOURCE = "Data: Toronto exam timetabling benchmark, car-s-91"
+SOURCE = f"Data: Toronto exam timetabling benchmark, {DATASET}"
 
 # bordeaux marks the focus group, gray is everything else
 ACCENT, NEUTRAL = "#9b2348", "#8f8d86"
@@ -276,8 +276,7 @@ def summarize(courses, students):
 
 
 if __name__ == "__main__":
-    courses = load_courses(DATA_DIR / "car-s-91.crs")
-    students = load_students(DATA_DIR / "car-s-91.stu")
+    courses, students = load_dataset()
     m, stats, groups, focus = summarize(courses, students)
 
     print(f"Course pairs that clash: {clash_density(m):.3f}")

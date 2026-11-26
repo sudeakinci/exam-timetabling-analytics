@@ -1,7 +1,7 @@
 import pandas as pd
 
 from analysis import OUT_DIR, conflict_matrix
-from load_data import DATA_DIR, load_courses, load_students
+from load_data import DATA_DIR, load_dataset
 from scheduler import SLOTS_PER_DAY, build_timetables, conflict_graph
 
 # synthetic: the benchmark has no rooms. capacity = exam seats (spaced out), not lecture seats
@@ -74,8 +74,7 @@ def room_metrics(plan, rooms):
 
 
 if __name__ == "__main__":
-    courses = load_courses(DATA_DIR / "car-s-91.crs")
-    students = load_students(DATA_DIR / "car-s-91.stu")
+    courses, students = load_dataset()
     graph = conflict_graph(conflict_matrix(students, len(courses)))
     final = build_timetables(graph, students)["DSatur + day + period order"]
 

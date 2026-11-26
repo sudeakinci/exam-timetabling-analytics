@@ -5,7 +5,7 @@ from analysis import (
     plot_conflicts, plot_enrolled, plot_group_matrix, plot_groups, plot_scatter, plt, summarize,
     within_group_share,
 )
-from load_data import DATA_DIR, load_courses, load_students
+from load_data import DATASET, load_dataset
 from scheduler import build_timetables, compare, conflict_graph, plot_comparison
 
 
@@ -47,7 +47,7 @@ def save_dashboard(stats, m, groups, focus, results, kpis, path):
         ax.text(0.07, 0.2, label, transform=ax.transAxes, color=MUTED)
         if i == 0:
             _note(ax, "Exam conflict analysis", 48, fontsize=22, fontweight="bold", color=INK)
-            _note(ax, "Personal project on a public benchmark dataset (car-s-91, Toronto exam timetabling "
+            _note(ax, f"Personal project on a public benchmark dataset ({DATASET}, Toronto exam timetabling "
                       "benchmark). Course ids are anonymised.", 26, fontsize=11, color=MUTED)
 
     ax = fig.add_subplot(header[1])
@@ -79,8 +79,7 @@ def save_dashboard(stats, m, groups, focus, results, kpis, path):
 
 
 if __name__ == "__main__":
-    courses = load_courses(DATA_DIR / "car-s-91.crs")
-    students = load_students(DATA_DIR / "car-s-91.stu")
+    courses, students = load_dataset()
     m, stats, groups, focus = summarize(courses, students)
     results = compare(build_timetables(conflict_graph(m), students), students)
 

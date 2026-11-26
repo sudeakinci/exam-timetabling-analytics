@@ -6,7 +6,7 @@ import numpy as np
 import pandas as pd
 
 from analysis import ACCENT, INK, MUTED, NEUTRAL, OUT_DIR, SOURCE, _note, conflict_matrix, plt
-from load_data import DATA_DIR, load_courses, load_students
+from load_data import load_dataset
 
 SLOTS_PER_DAY = 3  # assumption: morning, midday, afternoon. the benchmark has no days
 
@@ -27,6 +27,11 @@ def conflict_graph(m):
 def schedule(graph, strategy):
     """Course id -> time slot (0, 1, 2, ...)."""
     return nx.greedy_color(graph, strategy=strategy)
+
+
+def lower_bound(graph):
+    """No timetable can use fewer slots: every course in a clique clashes with every other."""
+    return len(nx.max_weight_clique(graph, weight=None)[0])
 
 
 def evaluate(slots, students):
@@ -166,6 +171,39 @@ def plot_comparison(axes, results, small=False):
           40 if small else 44, fontsize=9 if small else 10, color=MUTED)
 
 
+# 520 (the most-clashing course) and 7 of its neighbours, picked so the drawing has no crossing lines
+EXAMPLE_COURSES = [520, 600, 24, 151, 153, 450, 476, 152]
+SLOT_COLORS = [ACCENT, "#e5b3c1", NEUTRAL]  # checked for colour blindness; slot is also written in each node
+
+
+def plot_colouring_example(graph, path):
+    """Small picture of graph colouring: a few real courses, coloured by their DSatur slot."""
+    sub = graph.subgraph(EXAMPLE_COURSES)
+    slots = schedule(sub, "saturation_largest_first")
+    ring = [n for n in EXAMPLE_COURSES if n != 152]
+    pos = nx.shell_layout(sub.subgraph(ring), [[520], ring[1:]])
+    pos[152] = 0.3 * (pos[151] + pos[153])  # inside the 520-151-153 triangle, so no line crosses
+
+    fig, ax = plt.subplots(figsize=(7, 6))
+    nx.draw_networkx_edges(sub, pos, ax=ax, edge_color=NEUTRAL, alpha=0.5, width=1.5)
+    nx.draw_networkx_nodes(sub, pos, ax=ax, node_size=2400, edgecolors=INK, linewidths=1,
+                           node_color=[SLOT_COLORS[slots[n]] for n in sub])
+    for n, (x, y) in pos.items():
+        color = INK if slots[n] == 1 else "white"
+        ax.text(x, y, str(n), ha="center", va="bottom", fontsize=12, fontweight="bold", color=color)
+        ax.text(x, y, f"slot {slots[n] + 1}", ha="center", va="top", fontsize=9, color=color)
+    ax.set_axis_off()
+    ax.margins(0.12)
+
+    n_slots = len(set(slots.values()))
+    _note(ax, "Linked courses never share a slot", 40, fontsize=14, fontweight="bold", color=INK)
+    _note(ax, f"{len(sub)} real courses. A line means at least one student takes both. "
+              f"DSatur needs {n_slots} slots here", 22, fontsize=10, color=MUTED)
+    _note(ax, SOURCE, -10, fontsize=8, color=MUTED, va="top")
+    fig.savefig(path, dpi=150, bbox_inches="tight", facecolor="white")
+    plt.close(fig)
+
+
 def save_comparison(results, path):
     fig, axes = plt.subplots(1, 3, figsize=(14, 3.6), sharey=True)
     plot_comparison(axes, results)
@@ -175,8 +213,7 @@ def save_comparison(results, path):
 
 
 if __name__ == "__main__":
-    courses = load_courses(DATA_DIR / "car-s-91.crs")
-    students = load_students(DATA_DIR / "car-s-91.stu")
+    courses, students = load_dataset()
     graph = conflict_graph(conflict_matrix(students, len(courses)))
     results = compare(build_timetables(graph, students), students)
 
@@ -185,8 +222,10 @@ if __name__ == "__main__":
 
     before = results["DSatur"]["students 2+ exams/day"]
     after = results["DSatur + day reordering"]["students 2+ exams/day"]
-    print(f"\nDay reordering: {before:,} -> {after:,} students with 2+ exams in a day "
+    print(f"\nLower bound: {lower_bound(graph)} slots (largest group of courses that all clash)")
+    print(f"Day reordering: {before:,} -> {after:,} students with 2+ exams in a day "
           f"({(before - after) / before:.1%} fewer)")
 
     save_comparison(results, OUT_DIR / "schedule_comparison.png")
-    print(f"Chart saved to {OUT_DIR / 'schedule_comparison.png'}")
+    plot_colouring_example(graph, OUT_DIR / "colouring_example.png")
+    print(f"Charts saved to {OUT_DIR / 'schedule_comparison.png'} and {OUT_DIR / 'colouring_example.png'}")

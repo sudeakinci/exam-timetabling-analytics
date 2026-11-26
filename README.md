@@ -12,7 +12,7 @@ A personal project that builds a clash-free university exam timetable and report
 |---|---|
 | Courses / students / exam enrolments | 682 / 16,925 / 56,877 |
 | Course pairs that share at least one student | 12.8% |
-| Exam slots needed (DSatur) | 31 slots, 11 days (benchmark standard: 35 slots) |
+| Exam slots needed (DSatur) | 31 slots, 11 days (lower bound: 23; benchmark standard: 35) |
 | Clashes (a student with two exams at the same time) | 0 |
 | Students with 2+ exams in one day | 5,519 → **3,302 (−40%)** after moving slots between days |
 | Students with back-to-back exams | 3,925 → **1,363 (−65%)** after reordering slots inside each day |
@@ -42,6 +42,8 @@ Two courses *clash* if at least one student takes both, so their exams can't be 
 
 Each course is a node; two courses are joined if they share a student. Giving every node a colour so that no two joined nodes share one is the same as giving every exam a time slot so that no student has two exams at once. Fewer colours means a shorter exam period.
 
+![Graph colouring example](outputs/colouring_example.png)
+
 Finding the minimum is NP-hard, so three greedy orderings were compared:
 
 | Method | How it picks the next course | Slots | Days |
@@ -50,7 +52,7 @@ Finding the minimum is NP-hard, so three greedy orderings were compared:
 | Greedy, largest first (Welsh–Powell) | most clashes first | 34 | 12 |
 | **DSatur** | the course whose neighbours already use the most different slots | **31** | **11** |
 
-DSatur gave the shortest timetable, below the 35 slots commonly used for this instance. But shorter timetables pack exams into fewer days: students with 2+ exams in a day went *up* from 26.7% to 32.6%.
+DSatur gave the shortest timetable, below the 35 slots commonly used for this instance. It is not proven optimal: the conflict graph contains 23 courses that all clash with each other (a maximum clique), so no timetable can use fewer than 23 slots. The best answer lies somewhere between 23 and 31. But shorter timetables pack exams into fewer days: students with 2+ exams in a day went *up* from 26.7% to 32.6%.
 
 ### 4. Making the timetable kinder to students
 
@@ -87,7 +89,15 @@ With 70 rooms and 4,700 seats, all 56,877 exam seats are placed. Booked rooms ar
 
 ## Assumptions and limitations
 
-- **3 exam slots per day** (morning, midday, afternoon). The benchmark has no days; all same-day and back-to-back numbers depend on this.
+- **3 exam slots per day** (morning, midday, afternoon). The benchmark has no days; all same-day and back-to-back numbers depend on this. With the same 31 DSatur slots (`src/sensitivity.py`):
+
+  | Slots per day | Days | 2+ exams/day, DSatur | 2+ exams/day, tuned | Back-to-back, tuned |
+  |---|---|---|---|---|
+  | 2 | 16 | 19.5% | 9.0% | 1,528 |
+  | 3 | 11 | 32.6% | 19.5% | 1,363 |
+  | 4 | 8 | 44.8% | 31.3% | 2,011 |
+
+  Fewer slots a day means a longer exam period but fewer students with two exams in a day; this is a policy choice, not a technical one.
 - **Rooms are synthetic:** 2 auditoriums (400 seats), 8 lecture halls (150), 30 classrooms (60), 30 seminar rooms (30). Capacities are exam seats. They are a reasonable mix, not taken from a real campus.
 - **Course ids are anonymised**, so findings are about structure, not named courses.
 - Same-day and back-to-back counts are per student (a student counts once however many such days they have).
@@ -107,11 +117,16 @@ python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
 
+python src/run_all.py      # everything below, in order
+
 python src/load_data.py    # load and check the data
 python src/analysis.py     # conflict analysis and charts
-python src/scheduler.py    # build and compare timetables
+python src/scheduler.py    # build and compare timetables, lower bound
 python src/rooms.py        # seat exams in rooms, write outputs/timetable.csv
+python src/sensitivity.py  # 2, 3 or 4 slots per day
 python src/dashboard.py    # one-page dashboard
+
+pytest                     # data, clash, lower bound and room checks
 ```
 
 The data files (`car-s-91.crs`, `car-s-91.stu`) go in `data/raw/`. They come from the [benchmark page](https://www.cs.nott.ac.uk/~pszrq/data.htm) (`Toronto.zip`).
@@ -127,8 +142,11 @@ src/
   analysis.py     conflict matrix, bottlenecks, course groups, charts
   scheduler.py    greedy / DSatur, day and period reordering, metrics
   rooms.py        room assignment
+  sensitivity.py  slots-per-day scenarios
   dashboard.py    one-page summary image
-outputs/          charts, dashboard, timetable.csv
+  run_all.py      run every step
+tests/            pytest checks
+outputs/          charts, dashboard, timetable.csv, slots_per_day.csv
 ```
 
 ## References
